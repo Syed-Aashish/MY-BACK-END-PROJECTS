@@ -1,0 +1,115 @@
+import os
+
+class Product:
+    def __init__(self, name, price, quantity):
+        self.name = name
+        self.price = price
+        self.quantity = quantity
+
+    def total_price(self):
+        return self.price * self.quantity
+
+# Constants
+TAX_RATE = 0.08      # 8% Tax
+DISCOUNT_RATE = 0.10 # 10% Discount
+
+# Global variables
+products = []
+product_counts = {}
+
+# Helper function to get valid float input
+def get_valid_float(prompt):
+    while True:
+        try:
+            return float(input(prompt))
+        except ValueError:
+            print("Invalid input. Please enter a valid number.")
+
+# Helper function to get valid integer input
+def get_valid_int(prompt):
+    while True:
+        try:
+            return int(input(prompt))
+        except ValueError:
+            print("Invalid input. Please enter a valid integer.")
+
+# Calculate totals
+def calculate_subtotal():
+    return sum(p.total_price() for p in products)
+
+def calculate_tax(subtotal):
+    return subtotal * TAX_RATE
+
+def calculate_discount(subtotal):
+    return subtotal * DISCOUNT_RATE
+
+def calculate_total(subtotal, tax, discount):
+    return subtotal + tax - discount
+
+# Generate receipt and display it
+def generate_receipt():
+    subtotal = calculate_subtotal()
+    tax = calculate_tax(subtotal)
+    discount = calculate_discount(subtotal)
+    total = calculate_total(subtotal, tax, discount)
+
+    print("\nReceipt:")
+    print("{:<10}{:<10}{:<10}{:<10}".format("Item", "Price", "Quantity", "Total"))
+    print("-" * 40)
+
+    for name, quantity in product_counts.items():
+        price = next(p.price for p in products if p.name == name)
+        item_total = price * quantity
+        print(f"{name:<10}${price:<9.2f}{quantity:<10}${item_total:<.2f}")
+
+    print("\nSubtotal: ${:.2f}".format(subtotal))
+    print("Tax: ${:.2f}".format(tax))
+    print("Discount: ${:.2f}".format(discount))
+    print("Total: ${:.2f}".format(total))
+
+    save_receipt(subtotal, tax, discount, total)
+
+# Save receipt to file
+def save_receipt(subtotal, tax, discount, total):
+    try:
+        with open("receipt.txt", "w") as file:
+            file.write("Receipt:\n")
+            file.write("{:<10}{:<10}{:<10}{:<10}\n".format("Item", "Price", "Quantity", "Total"))
+            file.write("-" * 40 + "\n")
+            for name, quantity in product_counts.items():
+                price = next(p.price for p in products if p.name == name)
+                item_total = price * quantity
+                file.write(f"{name:<10}${price:<9.2f}{quantity:<10}${item_total:<.2f}\n")
+
+            file.write("\nSubtotal: ${:.2f}\n".format(subtotal))
+            file.write("Tax: ${:.2f}\n".format(tax))
+            file.write("Discount: ${:.2f}\n".format(discount))
+            file.write("Total: ${:.2f}\n".format(total))
+
+        print("\nReceipt saved to 'receipt.txt'")
+    except IOError as e:
+        print(f"Error saving receipt: {e}")
+
+# Main program
+def main():
+    while True:
+        name = input("Enter item name: ")
+        price = get_valid_float("Enter item price: ")
+        quantity = get_valid_int("Enter item quantity: ")
+
+        product = Product(name, price, quantity)
+        products.append(product)
+
+        if name in product_counts:
+            product_counts[name] += quantity
+        else:
+            product_counts[name] = quantity
+
+        more = input("Do you want to add more items? (yes/no): ").strip().lower()
+        if more != 'yes':
+            break
+
+    generate_receipt()
+
+if __name__ == "__main__":
+    main()
